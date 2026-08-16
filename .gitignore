@@ -1,0 +1,4 @@
+# Local proxmox job state that an external process writes into this directory.
+# It is not part of the roles repo and must never be committed.
+proxmox-jobs.sqlite3
+proxmox-jobs.sqlite3-*

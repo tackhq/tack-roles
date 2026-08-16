@@ -1,0 +1,163 @@
+# Provisions an AI stack on Ubuntu: Claude Code + omp (oh-my-pi) coding agents,
+# Node.js, and the MCPJungle MCP gateway with a default set of MCP servers.
+
+# --- Prerequisites ---
+
+- name: Install prerequisites
+  apt:
+    name:
+      - curl
+      - gnupg
+      - ca-certificates
+      - tar
+      - unzip
+    state: present
+    update_cache: true
+
+- name: Create the apt keyrings directory
+  file:
+    path: "{{ ai_tools_keyrings_dir }}"
+    state: directory
+    mode: "0755"
+
+# --- Claude Code (Anthropic signed apt repo) ---
+
+- name: Download the Claude Code apt GPG key
+  command:
+    cmd: "curl -fsSL {{ ai_tools_claude_key_url }} -o {{ ai_tools_keyrings_dir }}/claude-code.asc"
+    creates: "{{ ai_tools_keyrings_dir }}/claude-code.asc"
+
+- name: Ensure the Claude Code key is world-readable
+  file:
+    path: "{{ ai_tools_keyrings_dir }}/claude-code.asc"
+    mode: "0644"
+
+- name: Configure the Claude Code apt repository
+  template:
+    src: claude-code.list.j2
+    dest: /etc/apt/sources.list.d/claude-code.list
+    mode: "0644"
+
+- name: Install Claude Code
+  apt:
+    name: claude-code
+    state: present
+    update_cache: true
+
+# --- Node.js (NodeSource; required for npx-based MCP servers) ---
+
+- name: Download the NodeSource apt GPG key
+  command:
+    cmd: "curl -fsSL {{ ai_tools_node_key_url }} -o {{ ai_tools_keyrings_dir }}/nodesource.asc"
+    creates: "{{ ai_tools_keyrings_dir }}/nodesource.asc"
+
+- name: Ensure the NodeSource key is world-readable
+  file:
+    path: "{{ ai_tools_keyrings_dir }}/nodesource.asc"
+    mode: "0644"
+
+- name: Configure the NodeSource apt repository
+  template:
+    src: nodesource.list.j2
+    dest: /etc/apt/sources.list.d/nodesource.list
+    mode: "0644"
+
+- name: Install Node.js
+  apt:
+    name: nodejs
+    state: present
+    update_cache: true
+
+# --- omp (oh-my-pi) ---
+# --binary installs a self-contained prebuilt binary (no Bun runtime needed);
+# PI_INSTALL_DIR places it system-wide.
+- name: Install omp (oh-my-pi)
+  command:
+    cmd: "sh -c 'curl -fsSL https://omp.sh/install | PI_INSTALL_DIR={{ ai_tools_omp_install_dir }} sh -s -- --binary'"
+    creates: "{{ ai_tools_omp_install_dir }}/omp"
+
+# --- MCPJungle gateway (install from GitHub release) ---
+
+- name: Download the MCPJungle release tarball
+  command:
+    cmd: "curl -fsSL {{ ai_tools_mcpjungle_url }} -o /tmp/mcpjungle.tar.gz"
+    creates: "{{ ai_tools_bin_dir }}/mcpjungle"
+
+- name: Extract the mcpjungle binary onto the PATH
+  command:
+    cmd: "tar -xzf /tmp/mcpjungle.tar.gz -C {{ ai_tools_bin_dir }} mcpjungle"
+    creates: "{{ ai_tools_bin_dir }}/mcpjungle"
+
+- name: Ensure mcpjungle is executable
+  file:
+    path: "{{ ai_tools_bin_dir }}/mcpjungle"
+    mode: "0755"
+
+# --- MCPJungle service ---
+
+- name: Create the mcpjungle system user
+  user:
+    name: "{{ ai_tools_mcpjungle_user }}"
+    home: "{{ ai_tools_mcpjungle_home }}"
+    shell: /usr/sbin/nologin
+    system: true
+
+- name: Create the mcpjungle state directory
+  file:
+    path: "{{ ai_tools_mcpjungle_home }}"
+    state: directory
+    owner: "{{ ai_tools_mcpjungle_user }}"
+    group: "{{ ai_tools_mcpjungle_user }}"
+    mode: "0750"
+
+- name: Install the mcpjungle systemd unit
+  template:
+    src: mcpjungle.service.j2
+    dest: /etc/systemd/system/mcpjungle.service
+    mode: "0644"
+
+- name: Enable and start mcpjungle
+  systemd:
+    name: mcpjungle
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Wait for the mcpjungle gateway to accept connections
+  wait_for:
+    host: 127.0.0.1
+    port: "{{ ai_tools_mcpjungle_port }}"
+    timeout: 60
+
+# --- Register default MCP servers into MCPJungle ---
+# The register CLI defaults to port 8000, so point it at the server explicitly.
+# A marker file under .registered/ makes each registration run once.
+
+- name: Create the registration marker directory
+  file:
+    path: "{{ ai_tools_mcpjungle_home }}/.registered"
+    state: directory
+    mode: "0755"
+
+- name: Register the context7 MCP server
+  command:
+    cmd: "sh -c 'mcpjungle --registry http://127.0.0.1:{{ ai_tools_mcpjungle_port }} register --name context7 --url {{ ai_tools_context7_url }} && touch {{ ai_tools_mcpjungle_home }}/.registered/context7'"
+    creates: "{{ ai_tools_mcpjungle_home }}/.registered/context7"
+
+- name: Deploy the sequential-thinking MCP server config
+  copy:
+    src: mcp-sequential-thinking.json
+    dest: "{{ ai_tools_mcpjungle_home }}/mcp-sequential-thinking.json"
+    mode: "0644"
+
+- name: Register the sequential-thinking MCP server
+  command:
+    cmd: "sh -c 'mcpjungle --registry http://127.0.0.1:{{ ai_tools_mcpjungle_port }} register -c {{ ai_tools_mcpjungle_home }}/mcp-sequential-thinking.json && touch {{ ai_tools_mcpjungle_home }}/.registered/sequential-thinking'"
+    creates: "{{ ai_tools_mcpjungle_home }}/.registered/sequential-thinking"
+
+# --- Per-user Claude Code wiring to the gateway (empty list => skipped) ---
+# Idempotent: only adds the server if the user doesn't already have it.
+- name: Point each user's Claude Code at the MCPJungle gateway
+  command:
+    cmd: "runuser -u {{ item }} -- sh -c 'claude mcp get mcpjungle >/dev/null 2>&1 || claude mcp add --transport http mcpjungle http://localhost:{{ ai_tools_mcpjungle_port }}/mcp --scope user'"
+  loop: "{{ ai_tools_users }}"

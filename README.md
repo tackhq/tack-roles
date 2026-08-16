@@ -11,6 +11,7 @@ share across playbooks and projects. This repository is a home for such roles.
 
 | Role | Description |
 | --- | --- |
+| [`ai-tools`](roles/ai-tools) | Installs Claude Code + omp coding agents and an MCPJungle MCP gateway with servers. |
 | [`devbox`](roles/devbox) | Sets up a developer environment: CLI tools, editors, multiplexers, and opt-in zsh/vim config. |
 | [`docker`](roles/docker) | Installs Docker Engine on Ubuntu from Docker's official apt repository. |
 | [`terraform`](roles/terraform) | Installs Terraform via tfenv for easy version switching. |

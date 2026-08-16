@@ -1,0 +1,14 @@
+[Unit]
+Description=MCPJungle MCP gateway
+After=network.target
+
+[Service]
+Type=simple
+User={{ ai_tools_mcpjungle_user }}
+WorkingDirectory={{ ai_tools_mcpjungle_home }}
+ExecStart={{ ai_tools_bin_dir }}/mcpjungle start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

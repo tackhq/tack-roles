@@ -1,0 +1,28 @@
+ai_tools_bin_dir: /usr/local/bin
+ai_tools_keyrings_dir: /etc/apt/keyrings
+
+# --- Claude Code (Anthropic signed apt repo) ---
+ai_tools_claude_channel: stable            # stable | latest
+ai_tools_claude_key_url: https://downloads.claude.ai/keys/claude-code.asc
+
+# --- Node.js (NodeSource; lets MCPJungle spawn npx-based stdio MCP servers) ---
+ai_tools_node_major: "22"
+ai_tools_node_key_url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+
+# --- omp / oh-my-pi (self-contained prebuilt binary, system-wide) ---
+ai_tools_omp_install_dir: /usr/local/bin
+
+# --- MCPJungle gateway ---
+ai_tools_mcpjungle_version: "0.4.6"
+ai_tools_mcpjungle_arch: x86_64            # x86_64 | arm64
+ai_tools_mcpjungle_url: "https://github.com/mcpjungle/MCPJungle/releases/download/{{ ai_tools_mcpjungle_version }}/mcpjungle_Linux_{{ ai_tools_mcpjungle_arch }}.tar.gz"
+ai_tools_mcpjungle_port: 8080
+ai_tools_mcpjungle_home: /var/lib/mcpjungle
+ai_tools_mcpjungle_user: mcpjungle
+
+# HTTP MCP server registered into MCPJungle by default (up-to-date library docs).
+ai_tools_context7_url: "https://mcp.context7.com/mcp"
+
+# --- Per-user Claude Code wiring to the gateway (empty => skipped) ---
+# Add usernames to point their Claude Code at the MCPJungle endpoint.
+ai_tools_users: []
