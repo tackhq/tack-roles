@@ -1,17 +1,4 @@
-# Name of the WireGuard interface / config file (wg0 -> /etc/wireguard/wg0.conf,
-# managed by the wg-quick@wg0 service).
-wireguard_interface: wg0
-
-# Directory holding WireGuard configs.
-wireguard_config_dir: /etc/wireguard
-
-# Full contents of the WireGuard config, i.e. the [Interface] and [Peer]
-# sections. REQUIRED — the role will not connect without it.
-#
-# This contains the interface PrivateKey. Supply it from a secret store
-# (vault / encrypted vars); never commit a real key. The file is written 0600.
-wireguard_config: ""
-
-# Desired state of the wg-quick@<interface> service.
-wireguard_service_state: started
-wireguard_service_enabled: true
+# Packages installed for WireGuard.
+wireguard_packages:
+  - wireguard
+  - wireguard-tools

@@ -1,22 +1,8 @@
-# Sets up an OpenVPN client: installs OpenVPN, deploys the client profile, and
-# runs it via the openvpn-client@<name> systemd service.
+# Installs OpenVPN. Deploying client profiles and running tunnels is left to
+# the caller.
 
 - name: Install OpenVPN
   apt:
-    name: openvpn
+    name: "{{ openvpn_packages }}"
     state: present
     update_cache: true
-
-- name: Deploy the OpenVPN client profile
-  copy:
-    content: "{{ openvpn_client_config }}"
-    dest: "{{ openvpn_config_dir }}/{{ openvpn_client_name }}.conf"
-    mode: "0600"
-    create_dirs: true
-  notify: Restart OpenVPN client
-
-- name: Enable and start the OpenVPN client
-  systemd:
-    name: "openvpn-client@{{ openvpn_client_name }}"
-    state: "{{ openvpn_service_state }}"
-    enabled: "{{ openvpn_service_enabled }}"
