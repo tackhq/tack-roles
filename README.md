@@ -13,6 +13,8 @@ share across playbooks and projects. This repository is a home for such roles.
 | --- | --- |
 | [`docker`](roles/docker) | Installs Docker Engine on Ubuntu from Docker's official apt repository. |
 | [`terraform`](roles/terraform) | Installs Terraform via tfenv for easy version switching. |
+| [`wireguard`](roles/wireguard) | Configures a WireGuard client (peer) tunnel via wg-quick. |
+| [`openvpn-client`](roles/openvpn-client) | Configures an OpenVPN client connection via systemd. |
 
 ## Using a role
 

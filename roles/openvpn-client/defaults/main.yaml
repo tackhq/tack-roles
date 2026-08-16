@@ -1,0 +1,17 @@
+# Client profile name. "client" -> /etc/openvpn/client/client.conf, managed by
+# the openvpn-client@client service.
+openvpn_client_name: client
+
+# Directory holding client profiles.
+openvpn_config_dir: /etc/openvpn/client
+
+# Full contents of the OpenVPN client profile (.ovpn / .conf), including any
+# inline <ca>/<cert>/<key>/<tls-auth> blocks. REQUIRED.
+#
+# May contain private keys and credentials. Supply from a secret store; never
+# commit real secrets. The file is written 0600.
+openvpn_client_config: ""
+
+# Desired state of the openvpn-client@<name> service.
+openvpn_service_state: started
+openvpn_service_enabled: true

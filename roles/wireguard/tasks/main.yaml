@@ -1,0 +1,24 @@
+# Sets up a WireGuard client (peer) connection: installs WireGuard, deploys the
+# tunnel config, and brings it up via wg-quick.
+
+- name: Install WireGuard
+  apt:
+    name:
+      - wireguard
+      - wireguard-tools
+    state: present
+    update_cache: true
+
+- name: Deploy the WireGuard configuration
+  copy:
+    content: "{{ wireguard_config }}"
+    dest: "{{ wireguard_config_dir }}/{{ wireguard_interface }}.conf"
+    mode: "0600"
+    create_dirs: true
+  notify: Restart WireGuard
+
+- name: Enable and start the WireGuard interface
+  systemd:
+    name: "wg-quick@{{ wireguard_interface }}"
+    state: "{{ wireguard_service_state }}"
+    enabled: "{{ wireguard_service_enabled }}"
