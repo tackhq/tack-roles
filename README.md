@@ -7,6 +7,12 @@ system-bootstrapping tool inspired by Ansible. **Roles** package tasks,
 handlers, variables, templates, and files into a self-contained unit you can
 share across playbooks and projects. This repository is a home for such roles.
 
+## Available roles
+
+| Role | Description |
+| --- | --- |
+| [`docker`](roles/docker) | Installs Docker Engine on Ubuntu from Docker's official apt repository. |
+
 ## Using a role
 
 Tack resolves a plain role name against the `roles/` directory next to your
@@ -14,12 +20,12 @@ playbook, but it can also fetch a role straight from a git or HTTPS URL — so
 you can consume anything in this repo without vendoring it first.
 
 ```yaml
-name: Set up a web server
-hosts: webservers
+name: Set up a host
+hosts: servers
 roles:
   # A role published in this repository, pulled directly from GitHub.
-  - role: https://github.com/tackhq/tack-roles.git//nginx
-    tags: [web]
+  - role: https://github.com/tackhq/tack-roles.git//docker
+    tags: [docker]
 
   # A local role in ./roles/, for comparison.
   - role: firewall
