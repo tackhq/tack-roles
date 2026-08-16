@@ -1,0 +1,120 @@
+# Sets up a developer environment on Ubuntu: CLI tools, editors, terminal
+# multiplexers, and (opt-in per user) zsh + oh-my-zsh + a curated vim config.
+
+# --- Pure install (always runs) ---
+
+- name: Install developer CLI packages
+  apt:
+    name: "{{ devbox_packages }}"
+    state: present
+    update_cache: true
+
+# On Ubuntu these tools ship under Debian-renamed binaries; link the familiar
+# names onto the PATH.
+- name: Link fd onto the PATH
+  file:
+    path: "{{ devbox_bin_dir }}/fd"
+    src: /usr/bin/fdfind
+    state: link
+
+- name: Link bat onto the PATH
+  file:
+    path: "{{ devbox_bin_dir }}/bat"
+    src: /usr/bin/batcat
+    state: link
+
+# zellij is not packaged in apt (or is stale), so install the release binary.
+- name: Download the zellij release tarball
+  command:
+    cmd: "curl -fsSL {{ devbox_zellij_url }} -o /tmp/zellij.tar.gz"
+    creates: "{{ devbox_bin_dir }}/zellij"
+
+- name: Extract zellij onto the PATH
+  command:
+    cmd: "tar -xzf /tmp/zellij.tar.gz -C {{ devbox_bin_dir }} zellij"
+    creates: "{{ devbox_bin_dir }}/zellij"
+
+- name: Ensure zellij is executable
+  file:
+    path: "{{ devbox_bin_dir }}/zellij"
+    mode: "0755"
+
+# --- Per-user shell setup (loops over devbox_users; empty list => skipped) ---
+# Clones run as the target user via runuser so files are user-owned, and are
+# guarded by creates: so they install once (no auto-update of pinned config).
+
+- name: Set the login shell to zsh
+  user:
+    name: "{{ item }}"
+    shell: "{{ devbox_login_shell }}"
+  loop: "{{ devbox_users }}"
+
+- name: Install oh-my-zsh
+  command:
+    cmd: "runuser -u {{ item }} -- git clone --depth 1 {{ devbox_omz_repo }} {{ devbox_home_base }}/{{ item }}/.oh-my-zsh"
+    creates: "{{ devbox_home_base }}/{{ item }}/.oh-my-zsh"
+  loop: "{{ devbox_users }}"
+
+- name: Install the powerlevel10k theme
+  command:
+    cmd: "runuser -u {{ item }} -- git clone --depth 1 {{ devbox_p10k_repo }} {{ devbox_home_base }}/{{ item }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    creates: "{{ devbox_home_base }}/{{ item }}/.oh-my-zsh/custom/themes/powerlevel10k"
+  loop: "{{ devbox_users }}"
+
+- name: Install the zsh-fzf-history-search plugin
+  command:
+    cmd: "runuser -u {{ item }} -- git clone --depth 1 {{ devbox_fzf_hist_repo }} {{ devbox_home_base }}/{{ item }}/.oh-my-zsh/custom/plugins/zsh-fzf-history-search"
+    creates: "{{ devbox_home_base }}/{{ item }}/.oh-my-zsh/custom/plugins/zsh-fzf-history-search"
+  loop: "{{ devbox_users }}"
+
+- name: Back up an existing .zshrc once
+  command:
+    cmd: "runuser -u {{ item }} -- sh -c 'test -f {{ devbox_home_base }}/{{ item }}/.zshrc && cp {{ devbox_home_base }}/{{ item }}/.zshrc {{ devbox_home_base }}/{{ item }}/.zshrc.orig || true'"
+    creates: "{{ devbox_home_base }}/{{ item }}/.zshrc.orig"
+  loop: "{{ devbox_users }}"
+
+- name: Deploy the managed .zshrc
+  template:
+    src: zshrc.j2
+    dest: "{{ devbox_home_base }}/{{ item }}/.zshrc"
+    mode: "0644"
+  loop: "{{ devbox_users }}"
+
+- name: Own the .zshrc as the user
+  file:
+    path: "{{ devbox_home_base }}/{{ item }}/.zshrc"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ devbox_users }}"
+
+- name: Install vim-plug
+  command:
+    cmd: "runuser -u {{ item }} -- curl -fsSL --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim -o {{ devbox_home_base }}/{{ item }}/.vim/autoload/plug.vim"
+    creates: "{{ devbox_home_base }}/{{ item }}/.vim/autoload/plug.vim"
+  loop: "{{ devbox_users }}"
+
+- name: Back up an existing .vimrc once
+  command:
+    cmd: "runuser -u {{ item }} -- sh -c 'test -f {{ devbox_home_base }}/{{ item }}/.vimrc && cp {{ devbox_home_base }}/{{ item }}/.vimrc {{ devbox_home_base }}/{{ item }}/.vimrc.orig || true'"
+    creates: "{{ devbox_home_base }}/{{ item }}/.vimrc.orig"
+  loop: "{{ devbox_users }}"
+
+- name: Deploy the managed .vimrc
+  template:
+    src: vimrc.j2
+    dest: "{{ devbox_home_base }}/{{ item }}/.vimrc"
+    mode: "0644"
+  loop: "{{ devbox_users }}"
+
+- name: Own the .vimrc as the user
+  file:
+    path: "{{ devbox_home_base }}/{{ item }}/.vimrc"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ devbox_users }}"
+
+# Internally idempotent (installed plugins are skipped) but reports "changed".
+- name: Install vim plugins
+  command:
+    cmd: "runuser -u {{ item }} -- vim -es -u {{ devbox_home_base }}/{{ item }}/.vimrc +PlugInstall +qall"
+  loop: "{{ devbox_users }}"

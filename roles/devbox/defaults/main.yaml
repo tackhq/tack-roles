@@ -1,0 +1,50 @@
+# --- System CLI packages (all available in Ubuntu 24.04 universe) ---
+devbox_packages:
+  - zsh
+  - vim
+  - neovim
+  - tmux
+  - git
+  - fd-find            # binary is `fdfind` on Ubuntu (symlinked to `fd` below)
+  - silversearcher-ag  # `ag`
+  - ripgrep            # `rg`
+  - fzf
+  - git-delta          # `delta`
+  - bat                # binary is `batcat` on Ubuntu (symlinked to `bat` below)
+  - gh
+  - zoxide
+  - eza
+  - jq
+  - htop
+  - tree
+  - direnv
+  - curl
+  - wget
+  - unzip
+  - build-essential
+  - ca-certificates
+
+# Directory on PATH for the fd/bat symlinks and the zellij binary.
+devbox_bin_dir: /usr/local/bin
+
+# --- zellij (not in apt; installed from a GitHub release tarball) ---
+# The release asset uses the GNU/musl arch triple, not Debian's amd64/arm64:
+# amd64 -> x86_64, arm64 -> aarch64. Set this to match the host.
+devbox_zellij_arch: x86_64
+# Override the URL to pin a version, e.g. .../download/v0.42.2/zellij-...
+devbox_zellij_url: "https://github.com/zellij-org/zellij/releases/latest/download/zellij-{{ devbox_zellij_arch }}-unknown-linux-musl.tar.gz"
+
+# --- Per-user shell setup (empty list => packages only, no per-user changes) ---
+# Add usernames to install oh-my-zsh + powerlevel10k, a managed ~/.zshrc, a
+# curated ~/.vimrc, and set zsh as their login shell.
+devbox_users: []
+devbox_home_base: /home
+devbox_login_shell: /usr/bin/zsh
+
+devbox_omz_repo: https://github.com/ohmyzsh/ohmyzsh.git
+devbox_p10k_repo: https://github.com/romkatv/powerlevel10k.git
+devbox_fzf_hist_repo: https://github.com/joshskidmore/zsh-fzf-history-search.git
+
+devbox_zsh_theme: powerlevel10k/powerlevel10k
+# Rendered verbatim into plugins=(...). Space-separated (no template loops).
+devbox_zsh_plugins: "git terraform kubectl aws wd zsh-fzf-history-search"
