@@ -1,0 +1,42 @@
+# Installs Terraform via tfenv (https://github.com/tfutils/tfenv) for easy
+# switching between Terraform versions. System-wide install under {{ tfenv_root }}.
+
+- name: Install tfenv prerequisites
+  apt:
+    name:
+      - git
+      - curl
+      - unzip
+      - gnupg
+    state: present
+    update_cache: true
+
+- name: Clone tfenv at the pinned release
+  git:
+    repo: "{{ tfenv_repo }}"
+    dest: "{{ tfenv_root }}"
+    version: "{{ tfenv_version }}"
+    depth: 1
+    update: true
+
+# tfenv resolves its root from the real path of its own script, so symlinking
+# into a PATH directory makes both tfenv and the terraform shim available to
+# every user and to non-interactive runs, with no shell-rc changes.
+- name: Link tfenv and terraform onto the PATH
+  file:
+    path: "{{ tfenv_bin_dir }}/{{ item }}"
+    src: "{{ tfenv_root }}/bin/{{ item }}"
+    state: link
+  loop:
+    - tfenv
+    - terraform
+
+# tfenv is internally idempotent (a version already installed is skipped), so
+# these steps converge but report "changed" on every run.
+- name: Install the requested Terraform version
+  command:
+    cmd: "{{ tfenv_bin_dir }}/tfenv install {{ terraform_version }}"
+
+- name: Select the Terraform version as the global default
+  command:
+    cmd: "{{ tfenv_bin_dir }}/tfenv use {{ terraform_version }}"

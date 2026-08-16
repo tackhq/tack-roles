@@ -1,0 +1,13 @@
+# Where tfenv is installed (system-wide).
+tfenv_root: /opt/tfenv
+
+# tfenv source repository and pinned release tag. Bump deliberately.
+tfenv_repo: https://github.com/tfutils/tfenv.git
+tfenv_version: v3.2.2
+
+# Directory on the system PATH where the tfenv/terraform shims are linked.
+tfenv_bin_dir: /usr/local/bin
+
+# Terraform version to install and set as the global default.
+# Accepts an exact version ("1.9.8"), "latest", or a tfenv regex ("latest:^1.9").
+terraform_version: latest

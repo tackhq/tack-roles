@@ -12,6 +12,7 @@ share across playbooks and projects. This repository is a home for such roles.
 | Role | Description |
 | --- | --- |
 | [`docker`](roles/docker) | Installs Docker Engine on Ubuntu from Docker's official apt repository. |
+| [`terraform`](roles/terraform) | Installs Terraform via tfenv for easy version switching. |
 
 ## Using a role
 
