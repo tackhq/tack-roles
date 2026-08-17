@@ -1,0 +1,23 @@
+# Ubuntu release codename for the Tailscale apt repo.
+# Defaults to the latest LTS ("noble" = 24.04). Tack has no codename fact, so
+# override this for other releases (e.g. "jammy" for 22.04).
+tailscale_apt_release: noble
+
+# Binary keyring path referenced by the apt source (Tailscale's convention).
+tailscale_keyring: /usr/share/keyrings/tailscale-archive-keyring.gpg
+
+# Packages installed from the Tailscale repo.
+tailscale_packages:
+  - tailscale
+
+# Desired state of the tailscaled service.
+tailscale_service_state: started
+tailscale_service_enabled: true
+
+# Optional: join a tailnet non-interactively. Leave empty to just install the
+# client + daemon and run `tailscale up` yourself. This is a SECRET — supply it
+# from a vault / encrypted vars, never commit a real key.
+tailscale_authkey: ""
+
+# Extra flags for `tailscale up`, e.g. "--ssh --accept-routes --hostname=web1".
+tailscale_up_args: ""

@@ -1,0 +1,56 @@
+# Installs Tailscale on Ubuntu from the official apt repository, following
+# https://tailscale.com/kb/1187/install-ubuntu
+
+- name: Install apt repository prerequisites
+  apt:
+    name:
+      - curl
+      - ca-certificates
+      - gnupg
+    state: present
+    update_cache: true
+
+- name: Ensure the keyrings directory exists
+  file:
+    path: /usr/share/keyrings
+    state: directory
+    mode: "0755"
+
+# The .noarmor.gpg key is a binary keyring, so it can be written directly (no
+# dearmor step). The signing key is the same across releases; the release
+# codename only selects the URL path.
+- name: Download the Tailscale apt GPG key
+  command:
+    cmd: "curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/{{ tailscale_apt_release }}.noarmor.gpg -o {{ tailscale_keyring }}"
+    creates: "{{ tailscale_keyring }}"
+
+- name: Ensure the Tailscale key is world-readable
+  file:
+    path: "{{ tailscale_keyring }}"
+    mode: "0644"
+
+- name: Configure the Tailscale apt repository
+  template:
+    src: tailscale.list.j2
+    dest: /etc/apt/sources.list.d/tailscale.list
+    mode: "0644"
+
+- name: Install Tailscale
+  apt:
+    name: "{{ tailscale_packages }}"
+    state: present
+    update_cache: true
+
+- name: Ensure the tailscaled service is running and enabled
+  systemd:
+    name: tailscaled
+    state: "{{ tailscale_service_state }}"
+    enabled: "{{ tailscale_service_enabled }}"
+
+# Optional: join a tailnet. Runs only when an auth key is provided, and only if
+# the node isn't already connected (so a single-use key isn't re-consumed on
+# repeat runs).
+- name: Bring Tailscale up and join the tailnet
+  command:
+    cmd: "sh -c 'tailscale status >/dev/null 2>&1 || tailscale up --authkey {{ tailscale_authkey }} {{ tailscale_up_args }}'"
+  when: tailscale_authkey
