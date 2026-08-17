@@ -80,7 +80,7 @@
 
 - name: Download the MCPJungle release tarball
   command:
-    cmd: "curl -fsSL {{ ai_tools_mcpjungle_url }} -o /tmp/mcpjungle.tar.gz"
+    cmd: "curl -fsSL https://github.com/mcpjungle/MCPJungle/releases/download/{{ ai_tools_mcpjungle_version }}/mcpjungle_Linux_{{ ai_tools_mcpjungle_arch }}.tar.gz -o /tmp/mcpjungle.tar.gz"
     creates: "{{ ai_tools_bin_dir }}/mcpjungle"
 
 - name: Extract the mcpjungle binary onto the PATH

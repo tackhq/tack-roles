@@ -13,9 +13,10 @@ ai_tools_node_key_url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
 ai_tools_omp_install_dir: /usr/local/bin
 
 # --- MCPJungle gateway ---
+# The download task references version/arch directly (tack interpolation is
+# single-pass and won't expand a var nested inside another var's value).
 ai_tools_mcpjungle_version: "0.4.6"
 ai_tools_mcpjungle_arch: x86_64            # x86_64 | arm64
-ai_tools_mcpjungle_url: "https://github.com/mcpjungle/MCPJungle/releases/download/{{ ai_tools_mcpjungle_version }}/mcpjungle_Linux_{{ ai_tools_mcpjungle_arch }}.tar.gz"
 ai_tools_mcpjungle_port: 8080
 ai_tools_mcpjungle_home: /var/lib/mcpjungle
 ai_tools_mcpjungle_user: mcpjungle
