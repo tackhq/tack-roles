@@ -161,3 +161,4 @@
   command:
     cmd: "runuser -u {{ item }} -- sh -c 'claude mcp get mcpjungle >/dev/null 2>&1 || claude mcp add --transport http mcpjungle http://localhost:{{ ai_tools_mcpjungle_port }}/mcp --scope user'"
   loop: "{{ ai_tools_users }}"
+  when: ai_tools_users

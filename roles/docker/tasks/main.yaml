@@ -49,3 +49,4 @@
   command:
     cmd: usermod -aG docker {{ item }}
   loop: "{{ docker_users }}"
+  when: docker_users
