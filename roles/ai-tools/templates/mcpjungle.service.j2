@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User={{ ai_tools_mcpjungle_user }}
-WorkingDirectory={{ ai_tools_mcpjungle_home }}
-ExecStart={{ ai_tools_bin_dir }}/mcpjungle start
+User={{ .ai_tools_mcpjungle_user }}
+WorkingDirectory={{ .ai_tools_mcpjungle_home }}
+ExecStart={{ .ai_tools_bin_dir }}/mcpjungle start
 Restart=on-failure
 RestartSec=5
 

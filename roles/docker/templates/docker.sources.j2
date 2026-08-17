@@ -1,6 +1,6 @@
 Types: deb
 URIs: https://download.docker.com/linux/ubuntu
-Suites: {{ docker_apt_release }}
-Components: {{ docker_apt_channel }}
-Architectures: {{ facts.arch }}
+Suites: {{ .docker_apt_release }}
+Components: {{ .docker_apt_channel }}
+Architectures: {{ .facts.arch }}
 Signed-By: /etc/apt/keyrings/docker.asc
