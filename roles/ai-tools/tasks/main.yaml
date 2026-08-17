@@ -125,6 +125,7 @@
 
 - name: Wait for the mcpjungle gateway to accept connections
   wait_for:
+    type: port
     host: 127.0.0.1
     port: "{{ ai_tools_mcpjungle_port }}"
     timeout: 60
