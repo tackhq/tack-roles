@@ -125,9 +125,8 @@
 
 - name: Wait for the mcpjungle gateway to accept connections
   wait_for:
-    type: port
-    host: 127.0.0.1
-    port: "{{ ai_tools_mcpjungle_port }}"
+    type: command
+    cmd: "curl -s -o /dev/null http://127.0.0.1:{{ ai_tools_mcpjungle_port }}/"
     timeout: 60
 
 # --- Register default MCP servers into MCPJungle ---
