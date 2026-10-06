@@ -13,6 +13,7 @@ share across playbooks and projects. This repository is a home for such roles.
 | --- | --- |
 | [`ai-tools`](roles/ai-tools) | Installs Claude Code + omp coding agents and an MCPJungle MCP gateway with servers. |
 | [`devbox`](roles/devbox) | Sets up a developer environment: CLI tools, editors, multiplexers, and opt-in zsh/vim config. |
+| [`mise`](roles/mise) | Installs mise and a per-user toolchain: Go, Node.js, Python and dev CLIs, version-pinnable per project. |
 | [`docker`](roles/docker) | Installs Docker Engine on Ubuntu from Docker's official apt repository. |
 | [`tailscale`](roles/tailscale) | Installs Tailscale from its official apt repo; optionally joins a tailnet. |
 | [`terraform`](roles/terraform) | Installs Terraform via tfenv for easy version switching. |

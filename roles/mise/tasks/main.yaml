@@ -1,0 +1,97 @@
+# Installs mise (https://mise.jdx.dev) from its signed apt repository and,
+# for each user in mise_users, puts mise-managed tools on PATH and installs
+# the global tool set (languages such as go/node/python plus dev CLIs).
+
+- name: Install prerequisites
+  apt:
+    name:
+      - curl
+      - ca-certificates
+      - git
+    state: present
+    update_cache: true
+
+- name: Create the apt keyrings directory
+  file:
+    path: "{{ mise_keyrings_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download the mise apt GPG key
+  command:
+    cmd: "curl -fsSL {{ mise_key_url }} -o {{ mise_keyrings_dir }}/mise-archive-keyring.asc"
+    creates: "{{ mise_keyrings_dir }}/mise-archive-keyring.asc"
+
+- name: Ensure the mise key is world-readable
+  file:
+    path: "{{ mise_keyrings_dir }}/mise-archive-keyring.asc"
+    mode: "0644"
+
+- name: Configure the mise apt repository
+  template:
+    src: mise.sources.j2
+    dest: /etc/apt/sources.list.d/mise.sources
+    mode: "0644"
+
+- name: Install mise
+  apt:
+    name: mise
+    state: present
+    update_cache: true
+
+# --- Per-user activation (empty list => skipped) ---
+# mise's shims directory on PATH makes every tool available in all shells,
+# including non-interactive ones (e.g. `ssh host cmd`, `pmox exec`):
+# ~/.zshenv is read by every zsh; for bash the line goes at the very top
+# of ~/.bashrc, before Ubuntu's "not interactive -> return" guard.
+# Shims resolve versions per directory, so a project's mise.toml still
+# picks its own versions. (No `mise activate` line: devbox manages
+# ~/.zshrc and would overwrite it.)
+
+- name: Put mise shims on PATH for zsh (all shells)
+  lineinfile:
+    path: "{{ mise_home_base }}/{{ item }}/.zshenv"
+    line: 'export PATH="$HOME/.local/share/mise/shims:$PATH"'
+    create: true
+  loop: "{{ mise_users }}"
+  when: mise_users
+
+- name: Own the .zshenv as the user
+  file:
+    path: "{{ mise_home_base }}/{{ item }}/.zshenv"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ mise_users }}"
+  when: mise_users
+
+- name: Put mise shims on PATH for bash (all shells)
+  lineinfile:
+    path: "{{ mise_home_base }}/{{ item }}/.bashrc"
+    line: 'export PATH="$HOME/.local/share/mise/shims:$PATH"'
+    insertbefore: BOF
+    create: true
+  loop: "{{ mise_users }}"
+  when: mise_users
+
+- name: Own the .bashrc as the user
+  file:
+    path: "{{ mise_home_base }}/{{ item }}/.bashrc"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ mise_users }}"
+  when: mise_users
+
+# --- Global tools ---
+# `mise use -g` records them in ~/.config/mise/config.toml and installs
+# them; re-running converges (already-installed tools are skipped).
+- name: Install the global tool set
+  command:
+    cmd: "runuser -u {{ item }} -- sh -c 'cd && mise use -g --yes {{ mise_tools }}'"
+  loop: "{{ mise_users }}"
+  when: mise_users
+
+- name: Refresh mise shims
+  command:
+    cmd: "runuser -u {{ item }} -- sh -c 'cd && mise reshim'"
+  loop: "{{ mise_users }}"
+  when: mise_users

@@ -1,0 +1,16 @@
+# Directory holding the apt signing key.
+mise_keyrings_dir: /etc/apt/keyrings
+mise_key_url: https://mise.jdx.dev/gpg-key.pub
+
+# Users that get mise activated and the tools below installed. mise keeps
+# tools per user (~/.local/share/mise), so an empty list installs mise
+# itself only.
+mise_users: []
+mise_home_base: /home
+
+# Global tools installed for every user above, as one space-separated
+# string of tool@version (tack interpolation is single-pass, so no list
+# templating). Any tool mise knows works: `mise registry` lists them;
+# npm:/pipx:/go:/cargo: prefixes install packages, e.g.
+# "npm:@fission-ai/openspec@latest".
+mise_tools: "go@latest node@lts python@3.12 uv@latest task@latest golangci-lint@latest"
