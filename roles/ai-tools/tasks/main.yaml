@@ -1,5 +1,5 @@
-# Provisions an AI stack on Ubuntu: Claude Code + omp (oh-my-pi) coding agents,
-# Node.js, and the MCPJungle MCP gateway with a default set of MCP servers.
+# Provisions an AI stack on Ubuntu: Claude Code + omp (oh-my-pi) coding agents
+# and the MCPJungle MCP gateway, with MCP servers running in Docker.
 
 # --- Prerequisites ---
 
@@ -11,6 +11,7 @@
       - ca-certificates
       - tar
       - unzip
+      - jq
     state: present
     update_cache: true
 
@@ -44,30 +45,6 @@
     state: present
     update_cache: true
 
-# --- Node.js (NodeSource; required for npx-based MCP servers) ---
-
-- name: Download the NodeSource apt GPG key
-  command:
-    cmd: "curl -fsSL {{ ai_tools_node_key_url }} -o {{ ai_tools_keyrings_dir }}/nodesource.asc"
-    creates: "{{ ai_tools_keyrings_dir }}/nodesource.asc"
-
-- name: Ensure the NodeSource key is world-readable
-  file:
-    path: "{{ ai_tools_keyrings_dir }}/nodesource.asc"
-    mode: "0644"
-
-- name: Configure the NodeSource apt repository
-  template:
-    src: nodesource.list.j2
-    dest: /etc/apt/sources.list.d/nodesource.list
-    mode: "0644"
-
-- name: Install Node.js
-  apt:
-    name: nodejs
-    state: present
-    update_cache: true
-
 # --- omp (oh-my-pi) ---
 # --binary installs a self-contained prebuilt binary (no Bun runtime needed);
 # PI_INSTALL_DIR places it system-wide.
@@ -94,27 +71,47 @@
     mode: "0755"
 
 # --- MCPJungle service ---
+# The gateway runs as ai_tools_mcp_user so it can read ~/.mcp/<name>/env and
+# start MCP servers with Docker.
 
-- name: Create the mcpjungle system user
-  user:
-    name: "{{ ai_tools_mcpjungle_user }}"
-    home: "{{ ai_tools_mcpjungle_home }}"
-    shell: /usr/sbin/nologin
-    system: true
+- name: Require ai_tools_mcp_user
+  assert:
+    that: ai_tools_mcp_user != ""
+    fail_msg: "set ai_tools_mcp_user: the MCP gateway runs as that (existing) user"
 
-- name: Create the mcpjungle state directory
+- name: Require Docker (MCP servers run in containers)
+  command:
+    cmd: "sh -c 'command -v docker >/dev/null || { echo \"ai-tools needs Docker: apply the docker role first\" >&2; exit 1; }'"
+
+- name: Add the MCP user to the docker group
+  command:
+    cmd: "sh -c 'id -nG {{ ai_tools_mcp_user }} | grep -qw docker || usermod -aG docker {{ ai_tools_mcp_user }}'"
+
+- name: Create the MCP directory
   file:
-    path: "{{ ai_tools_mcpjungle_home }}"
+    path: "{{ ai_tools_home_base }}/{{ ai_tools_mcp_user }}/.mcp"
     state: directory
-    owner: "{{ ai_tools_mcpjungle_user }}"
-    group: "{{ ai_tools_mcpjungle_user }}"
-    mode: "0750"
+    owner: "{{ ai_tools_mcp_user }}"
+    mode: "0700"
+
+- name: Install the MCP server catalog
+  copy:
+    src: mcp-catalog/
+    dest: "{{ ai_tools_mcp_catalog_dir }}/"
+    mode: "0644"
+
+- name: Install mcp-sync
+  copy:
+    src: mcp-sync
+    dest: "{{ ai_tools_bin_dir }}/mcp-sync"
+    mode: "0755"
 
 - name: Install the mcpjungle systemd unit
   template:
     src: mcpjungle.service.j2
     dest: /etc/systemd/system/mcpjungle.service
     mode: "0644"
+  register: mcpjungle_unit
 
 - name: Enable and start mcpjungle
   systemd:
@@ -123,37 +120,28 @@
     enabled: true
     daemon_reload: true
 
+# Restart right away (not via a handler) so the sync below talks to the
+# gateway with its new user, address and database.
+- name: Restart mcpjungle after a unit change
+  systemd:
+    name: mcpjungle
+    state: restarted
+    daemon_reload: true
+  when: mcpjungle_unit.changed
+
 - name: Wait for the mcpjungle gateway to accept connections
   wait_for:
     type: command
     cmd: "curl -s -o /dev/null http://127.0.0.1:{{ ai_tools_mcpjungle_port }}/"
     timeout: 60
 
-# --- Register default MCP servers into MCPJungle ---
-# The register CLI defaults to port 8000, so point it at the server explicitly.
-# A marker file under .registered/ makes each registration run once.
-
-- name: Create the registration marker directory
-  file:
-    path: "{{ ai_tools_mcpjungle_home }}/.registered"
-    state: directory
-    mode: "0755"
-
-- name: Register the context7 MCP server
+# --- Register MCP servers ---
+# Creates ~/.mcp/<name>/env for each server and registers the ones whose
+# credentials are filled in. Fill them in later and run `mcp-sync` as the MCP
+# user (or re-run the play).
+- name: Sync MCP servers into the gateway
   command:
-    cmd: "sh -c 'mcpjungle --registry http://127.0.0.1:{{ ai_tools_mcpjungle_port }} register --name context7 --url {{ ai_tools_context7_url }} && touch {{ ai_tools_mcpjungle_home }}/.registered/context7'"
-    creates: "{{ ai_tools_mcpjungle_home }}/.registered/context7"
-
-- name: Deploy the sequential-thinking MCP server config
-  copy:
-    src: mcp-sequential-thinking.json
-    dest: "{{ ai_tools_mcpjungle_home }}/mcp-sequential-thinking.json"
-    mode: "0644"
-
-- name: Register the sequential-thinking MCP server
-  command:
-    cmd: "sh -c 'mcpjungle --registry http://127.0.0.1:{{ ai_tools_mcpjungle_port }} register -c {{ ai_tools_mcpjungle_home }}/mcp-sequential-thinking.json && touch {{ ai_tools_mcpjungle_home }}/.registered/sequential-thinking'"
-    creates: "{{ ai_tools_mcpjungle_home }}/.registered/sequential-thinking"
+    cmd: "runuser -u {{ ai_tools_mcp_user }} -- env MCPJUNGLE_REGISTRY=http://127.0.0.1:{{ ai_tools_mcpjungle_port }} MCP_CATALOG={{ ai_tools_mcp_catalog_dir }} {{ ai_tools_bin_dir }}/mcp-sync {{ ai_tools_mcp_servers }}"
 
 # --- Per-user Claude Code wiring to the gateway (empty list => skipped) ---
 # Idempotent: only adds the server if the user doesn't already have it.

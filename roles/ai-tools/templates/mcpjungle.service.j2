@@ -1,12 +1,17 @@
 [Unit]
 Description=MCPJungle MCP gateway
-After=network.target
+After=network.target docker.service
+Wants=docker.service
 
 [Service]
 Type=simple
-User={{ .ai_tools_mcpjungle_user }}
-WorkingDirectory={{ .ai_tools_mcpjungle_home }}
-ExecStart={{ .ai_tools_bin_dir }}/mcpjungle start
+User={{ .ai_tools_mcp_user }}
+SupplementaryGroups=docker
+WorkingDirectory={{ .ai_tools_home_base }}/{{ .ai_tools_mcp_user }}/.mcp
+# Docker-based servers can take a while to start the first time.
+Environment=MCP_SERVER_INIT_REQ_TIMEOUT_SEC={{ .ai_tools_mcp_init_timeout }}
+# --host= (empty) listens on all interfaces.
+ExecStart={{ .ai_tools_bin_dir }}/mcpjungle start --host={{ .ai_tools_mcpjungle_listen }} --port {{ .ai_tools_mcpjungle_port }} --sqlite-db-path {{ .ai_tools_home_base }}/{{ .ai_tools_mcp_user }}/.mcp/mcpjungle.db
 Restart=on-failure
 RestartSec=5
 

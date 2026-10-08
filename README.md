@@ -11,7 +11,7 @@ share across playbooks and projects. This repository is a home for such roles.
 
 | Role | Description |
 | --- | --- |
-| [`ai-tools`](roles/ai-tools) | Installs Claude Code + omp coding agents and an MCPJungle MCP gateway with servers. |
+| [`ai-tools`](roles/ai-tools) | Installs Claude Code + omp coding agents and an MCPJungle gateway with Dockerized MCP servers (Jira, AWS, Jenkins, …). |
 | [`devbox`](roles/devbox) | Sets up a developer environment: CLI tools, editors, multiplexers, and opt-in zsh/vim config. |
 | [`mise`](roles/mise) | Installs mise and a per-user toolchain: Go, Node.js, Python and dev CLIs, version-pinnable per project. |
 | [`docker`](roles/docker) | Installs Docker Engine on Ubuntu from Docker's official apt repository. |
