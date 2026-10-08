@@ -26,7 +26,8 @@
 # zellij is not packaged in apt (or is stale), so install the release binary.
 - name: Download the zellij release tarball
   command:
-    cmd: "curl -fsSL https://github.com/zellij-org/zellij/releases/latest/download/zellij-{{ devbox_zellij_arch }}-unknown-linux-musl.tar.gz -o /tmp/zellij.tar.gz"
+    # The release assets use uname -m's names (x86_64, aarch64).
+    cmd: "sh -c 'curl -fsSL https://github.com/zellij-org/zellij/releases/latest/download/zellij-$(uname -m)-unknown-linux-musl.tar.gz -o /tmp/zellij.tar.gz'"
     creates: "{{ devbox_bin_dir }}/zellij"
 
 - name: Extract zellij onto the PATH

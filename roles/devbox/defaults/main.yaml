@@ -27,12 +27,8 @@ devbox_packages:
 # Directory on PATH for the fd/bat symlinks and the zellij binary.
 devbox_bin_dir: /usr/local/bin
 
-# --- zellij (not in apt; installed from a GitHub release tarball) ---
-# Note: the download task references devbox_zellij_arch directly (tack
-# interpolation is single-pass and won't expand a var nested inside another).
-# The release asset uses the GNU/musl arch triple, not Debian's amd64/arm64:
-# amd64 -> x86_64, arm64 -> aarch64. Set this to match the host.
-devbox_zellij_arch: x86_64
+# zellij (not in apt) is installed from its latest GitHub release for the
+# host's architecture.
 
 # --- Per-user shell setup (empty list => packages only, no per-user changes) ---
 # Add usernames to install oh-my-zsh + powerlevel10k, a managed ~/.zshrc, a

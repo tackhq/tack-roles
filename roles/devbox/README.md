@@ -13,7 +13,8 @@ configure their shell and editor.
   `fd-find`, `silversearcher-ag`, `ripgrep`, `fzf`, `git-delta`, `bat`, `gh`,
   `zoxide`, `eza`, `jq`, `htop`, `tree`, `direnv`, and build essentials.
 - Symlinks `fd` → `fdfind` and `bat` → `batcat` onto the PATH.
-- Installs `zellij` from its official GitHub release (not in apt).
+- Installs `zellij` (alongside `tmux`) from its latest GitHub release for the
+  host's architecture (not in apt).
 
 **Per user in `devbox_users`:**
 - Installs oh-my-zsh + the powerlevel10k theme + the `zsh-fzf-history-search`
@@ -40,8 +41,6 @@ editorconfig, polyglot, gruvbox). No LSP or completion engines.
 | --- | --- | --- |
 | `devbox_packages` | see [`defaults`](defaults/main.yaml) | System packages to install. |
 | `devbox_bin_dir` | `/usr/local/bin` | PATH dir for the fd/bat symlinks and zellij. |
-| `devbox_zellij_arch` | `x86_64` | zellij release arch (`x86_64` or `aarch64`). |
-| `devbox_zellij_url` | latest musl release | Override to pin a zellij version. |
 | `devbox_users` | `[]` | Users to configure. Empty = packages only. |
 | `devbox_home_base` | `/home` | Base path for user home directories. |
 | `devbox_login_shell` | `/usr/bin/zsh` | Login shell set for each user. |
