@@ -20,6 +20,14 @@ share across playbooks and projects. This repository is a home for such roles.
 | [`wireguard`](roles/wireguard) | Installs WireGuard and its tooling. |
 | [`openvpn-client`](roles/openvpn-client) | Installs the OpenVPN client package. |
 
+## Without tack: devbox-setup
+
+VMs launched with [pmox](https://github.com/eugenetaranov/pmox) also get
+`devbox-setup`, an interactive installer you run on the VM. It installs the
+same things these roles do, and more, without running tack from outside.
+It uses this repo's MCP catalog and `mcp-sync` (`roles/ai-tools/files`),
+so changes there reach both.
+
 ## Using a role
 
 Tack resolves a plain role name against the `roles/` directory next to your

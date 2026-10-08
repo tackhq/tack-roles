@@ -86,6 +86,9 @@ HTTP servers use `KIND=http` with either `URL=` or `URL_VAR=`/`URL_SUFFIX=`.
 They also take `AUTH=none|bearer|basic` with
 `AUTH_TOKEN_VAR=` and `AUTH_USER_VAR=`.
 
+The catalog and `mcp-sync` are also shipped by pmox's on-VM `devbox-setup`,
+which asks for these keys interactively and writes the same `env` files.
+
 ## mcp-sync
 
 ```sh
